@@ -1,0 +1,54 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# CI/CD
+.github
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Dependencies
+node_modules
+
+# Build outputs
+dist
+build
+*.pyc
+__pycache__
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Documentation
+README.md
+DEVELOPMENT.md
+*.md
+
+# Test
+coverage
+.coverage
+htmlcov
+*.test.js
+
+# Misc
+.dockerignore
+Dockerfile*
+docker-compose*.yml

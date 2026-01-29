@@ -1,0 +1,70 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: lms-postgres-dev
+    environment:
+      POSTGRES_DB: ${DB_NAME:-lmsdb}
+      POSTGRES_USER: ${DB_USER:-lmsuser}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-lmspass123}
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-lmsuser}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./lms-backend
+      dockerfile: Dockerfile.dev
+    container_name: lms-backend-dev
+    restart: unless-stopped
+    environment:
+      DEBUG: "True"
+      SECRET_KEY: ${SECRET_KEY:-your-super-secret-key-change-in-production}
+      DB_HOST: postgres
+      DB_NAME: ${DB_NAME:-lmsdb}
+      DB_USER: ${DB_USER:-lmsuser}
+      DB_PASSWORD: ${DB_PASSWORD:-lmspass123}
+      DB_PORT: 5432
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-localhost,127.0.0.1}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:5173}
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      # Mount source code for hot reload
+      - ./lms-backend:/app
+      # Persist Python cache
+      - backend_pycache:/app/__pycache__
+    command: python manage.py runserver 0.0.0.0:8000
+
+  frontend:
+    build:
+      context: ./lms-frontend
+      dockerfile: Dockerfile.dev
+    container_name: lms-frontend-dev
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    environment:
+      - VITE_API_URL=http://localhost:8000/api/v1
+    volumes:
+      # Mount source code for hot reload
+      - ./lms-frontend:/app
+      # Use named volume for node_modules to prevent overwriting
+      - frontend_node_modules:/app/node_modules
+    stdin_open: true
+    tty: true
+
+volumes:
+  postgres_data_dev:
+  backend_pycache:
+  frontend_node_modules:
